@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Gala 25 ans - Votez pour vos choristes</title>
+    
+      <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23D4AF37' stroke='%23B8960C' stroke-width='2'/%3E%3Ctext x='50' y='68' font-size='40' text-anchor='middle' fill='%230a0a0a' font-weight='bold'%3E25%3C/text%3E%3Ctext x='50' y='45' font-size='12' text-anchor='middle' fill='%230a0a0a' font-weight='bold'%3EANS%3C/text%3E%3C/svg%3E">
+    
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK -->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-content">
+            <div class="anniversary-badge" id="anniversaryBadge">
+                <i class="fas fa-star-of-life"></i> 
+                <span class="twenty-five">25 ANS</span> 
+                <i class="fas fa-star-of-life"></i>
+            </div>
+            <h1 class="main-title">Chœur de la Famille Awards</h1>
+            <p class="main-subtitle">Soirée de Gala 25ans</p>
+            <div class="gold-separator"></div>
+            <p class="date-location"><i class="far fa-calendar-alt"></i> A remplacer plus tard... • <i class="fas fa-location-dot"></i> Salle de Fête Blandine ...</p>
+        </div>
+    </header>
+
+   <div class="nav-links">
+    <a href="index.html" class="nav-link active"><i class="fas fa-vote-yea"></i> Voter</a>
+    <a href="instructions.html" class="nav-link"><i class="fas fa-book-open"></i> Instructions</a>
+    <a href="resultat.html" class="nav-link"><i class="fas fa-trophy"></i> Résultats</a>
+</div>
+
+    <section class="welcome-section">
+        <div class="welcome-bg"></div>
+        <div class="welcome-logo-float"></div>
+        <div class="container">
+            <div class="welcome-card">
+                <div class="welcome-icon" id="champagneGlasses">
+                    <div class="glasses-container">
+                        <i class="fas fa-champagne-glasses"></i>
+                    </div>
+                    <div class="droplets-container" id="dropletsContainer"></div>
+                </div>
+                <p><strong>Célébrons ensemble</strong> <strong>25 ans de passion et d'harmonie</strong>.</p>
+                <p>Votez pour vos choristes préférés.<br>
+                <span class="notice"><i class="fas fa-shield-alt"></i> <strong> Un seul vote par personne et par catégorie. </strong></span></p>
+               <button id="fireworksBtn" class="fireworks-btn">
+    <i class="fas fa-fire"></i>
+    <strong>Célébrer avec nous</strong>
+    <i class="fas fa-fire"></i>
+</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="vote-section">
+        <div class="container">
+            <div class="section-header">
+                <h2><i class="fas fa-vote-yea"></i> Exprimez votre vote</h2>
+                <div class="gold-line"></div>
+                <p>Choisissez une catégorie, puis votre candidat favori!</p>
+            </div>
+
+            <div class="categories-wrapper">
+                <div class="categories-grid" id="categoriesGrid"></div>
+            </div>
+
+            <div id="candidatesPanel" class="candidates-panel" style="display: none;">
+                <div class="candidates-header">
+                    <button id="backBtn" class="back-btn"><i class="fas fa-arrow-left"></i> Retour</button>
+                    <h3 id="currentCategoryTitle"></h3>
+                </div>
+                <div class="candidates-grid" id="candidatesGrid"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="dashboard-section">
+        <div class="container">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-line"></i> Résultats en temps réel</h2>
+                <div class="gold-line"></div>
+            </div>
+            <div id="dashboardContent" class="dashboard-content">
+                <div class="loading-results"><i class="fas fa-spinner fa-pulse"></i> Chargement des résultats...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Commentaires -->
+<section class="comments-section">
+    <div class="container">
+        <div class="section-header">
+            <h2><i class="fas fa-comments"></i> Avis des votants</h2>
+            <div class="gold-line"></div>
+            <p>Partagez votre ressenti et vos encouragements</p>
+        </div>
+        
+        <!-- Formulaire de commentaire -->
+        <div class="comment-form-container">
+            <h3><i class="fas fa-edit"></i> Laissez un message</h3>
+            <div class="comment-form">
+                <input type="text" id="commentName" placeholder="Votre nom (optionnel)" maxlength="50">
+                <textarea id="commentMessage" rows="3" placeholder="Votre message, encouragement, avis..." maxlength="500"></textarea>
+                <div class="comment-char-count">
+                    <span id="charCount">0</span>/500 caractères
+                </div>
+                <button id="submitCommentBtn" class="comment-submit-btn">
+                    <i class="fas fa-paper-plane"></i> Envoyer mon message
+                </button>
+            </div>
+        </div>
+        
+        <!-- Liste des commentaires -->
+        <div class="comments-list-container">
+            <h3><i class="fas fa-heart"></i> Messages des votants</h3>
+            <div id="commentsList" class="comments-list">
+                <div class="loading-comments"><i class="fas fa-spinner fa-pulse"></i> Chargement...</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+    <footer class="main-footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-copyright">
+                <i class="fas fa-music"></i> © 2026 - Chœur de la Famille - 25 ans de passion <i class="fas fa-music"></i>
+            </div>
+            <div class="footer-credit">
+                <i class="fas fa-code"></i> Développé avec <i class="fa-sharp fa-solid fa-heart"></i> par <strong>Merdi Mambwiya & Paul Mambwiya</strong> 
+                <a href="mailto:merdimambuya@coeurdelafamille.com" class="footer-link">
+                    <i class="fas fa-envelope"></i> merdimambwiya@gmail.com / paulbeverly001@gmail.com
+                </a>
+            </div>
+        </div>
+    </div>
+</footer>
+<!-- Modal pour agrandir les photos -->
+<div id="photoModal" class="photo-modal">
+    <div class="photo-modal-content">
+        <span class="photo-modal-close">&times;</span>
+        <img id="modalImage" class="modal-image" src="" alt="">
+        <div class="modal-caption" id="modalCaption"></div>
+    </div>
+</div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résultats - Gala 25 ans</title>
+      <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23D4AF37' stroke='%23B8960C' stroke-width='2'/%3E%3Ctext x='50' y='68' font-size='40' text-anchor='middle' fill='%230a0a0a' font-weight='bold'%3E25%3C/text%3E%3Ctext x='50' y='45' font-size='12' text-anchor='middle' fill='%230a0a0a' font-weight='bold'%3EANS%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK -->
+<
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <div class="anniversary-badge" id="anniversaryBadge">
+                <i class="fas fa-star-of-life"></i> 
+                <span class="twenty-five">RÉSULTATS FINAUX</span> 
+                <i class="fas fa-star-of-life"></i>
+            </div>
+            <h1 class="main-title">Chœur de la Famille</h1>
+            <p class="main-subtitle">Gala des 25 ans</p>
+        </div>
+    </header>
+
+    <div class="nav-links">
+        <a href="index.html" class="nav-link"><i class="fas fa-vote-yea"></i> Voter</a>
+        <a href="resultat.html" class="nav-link active"><i class="fas fa-chart-simple"></i> Résultats finaux</a>
+    </div>
+
+    <section class="results-section">
+        <div class="container">
+            <!-- Message d'attente -->
+            <div id="resultsMessage" class="results-message waiting">
+                <div class="waiting-icon">
+                    <i class="fas fa-hourglass-half fa-spin fa-3x"></i>
+                </div>
+                <h2>Les votes sont encore en cours !</h2>
+                <p>Les résultats finaux seront disponibles à la fin de la soirée.</p>
+                <div class="voting-status">
+                    <i class="fas fa-chart-line"></i> Mise à jour en temps réel
+                </div>
+                <a href="index.html" class="back-to-vote"><i class="fas fa-arrow-left"></i> Retourner voter</a>
+            </div>
+
+            <!-- Conteneur des résultats finaux -->
+            <div id="finalResultsContainer" style="display:none;">
+                <!-- Conteneur pour la photo du gagnant -->
+                <div id="winnerPhotoContainer" class="winner-photo-container" style="display: none;">
+                    <div class="winner-photo-card">
+                        <div class="winner-photo-img" id="winnerPhoto"></div>
+                        <div class="winner-photo-name" id="winnerPhotoName"></div>
+                        <div class="winner-photo-caption"><i class="fas fa-mouse-pointer"></i> Cliquez sur la photo pour agrandir</div>
+                    </div>
+                </div>
+                
+
+                <div class="section-header">
+                    <h2><i class="fas fa-crown"></i> Les Gagnants <i class="fas fa-crown"></i></h2>
+                    <div class="gold-line"></div>
+                </div>
+                <div id="finalResultsGrid" class="final-results-grid"></div>
+                <div class="congrats-banner">
+                    <p><i class="fas fa-heart"></i> Félicitations à tous les choristes ! <i class="fas fa-heart"></i></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-copyright">
+                    <i class="fas fa-music"></i> © 2026 - Chœur de la Famille - 25 ans de passion <i class="fas fa-music"></i>
+                </div>
+                <div class="footer-credit">
+                    <i class="fas fa-code"></i> Développé par <strong>Merdis Mambwiya &amp; Paul Mambwiya</strong> 
+                    <a href="mailto:merdimambuya@gmail.com" class="footer-link">
+                        <i class="fas fa-envelope"></i> merdimambwiya@gmail.com
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal pour agrandir les photos -->
+    <div id="photoModal" class="photo-modal">
+        <div class="photo-modal-content">
+            <span class="photo-modal-close"><i class="fas fa-times"></i></span>
+            <img id="modalImage" class="modal-image" src="" alt="">
+            <div class="modal-caption" id="modalCaption"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
