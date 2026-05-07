@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Gala 25 ans</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            padding: 20px;
+        }
+        .auth-card {
+            background: rgba(10, 10, 10, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+        .auth-card h1 {
+            text-align: center;
+            color: var(--gold);
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .auth-card .subtitle {
+            text-align: center;
+            color: #b0b0b0;
+            margin-bottom: 30px;
+        }
+        .auth-input {
+            width: 100%;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .auth-input:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 10px rgba(212,175,55,0.3);
+        }
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #D4AF37, #B8960C);
+            border: none;
+            border-radius: 10px;
+            color: #0a0a0a;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(212,175,55,0.4);
+        }
+        .auth-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #b0b0b0;
+        }
+        .auth-link a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+        .error-msg {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #e74c3c;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 20px;
+            color: #e74c3c;
+            text-align: center;
+            display: none;
+        }
+        .success-msg {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #2ecc71;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 20px;
+            color: #2ecc71;
+            text-align: center;
+            display: none;
+        }
+        .gold-text { color: var(--gold); }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1><i class="fas fa-crown"></i> Gala 25 ans</h1>
+            <div class="subtitle">Connectez-vous pour voter</div>
+            
+            <div id="errorMsg" class="error-msg"></div>
+            <div id="successMsg" class="success-msg"></div>
+            
+            <input type="email" id="email" class="auth-input" placeholder="Email" autocomplete="email">
+            <input type="password" id="password" class="auth-input" placeholder="Mot de passe" autocomplete="current-password">
+            
+            <button id="loginBtn" class="auth-btn"><i class="fas fa-sign-in-alt"></i> Se connecter</button>
+            
+            <div class="auth-link">
+                Pas encore de compte ? <a href="register.html">S'inscrire</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://vakxwklnrgtiqmlggcyq.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_gAbwfY1VE4AskWcDs8wrkw_m9Cjor1K";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMsg');
+            const successDiv = document.getElementById('successMsg');
+            
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            if (!email || !password) {
+                errorDiv.textContent = 'Veuillez remplir tous les champs';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+            
+            if (error) {
+                errorDiv.textContent = error.message === 'Invalid login credentials' 
+                    ? 'Email ou mot de passe incorrect' 
+                    : error.message;
+                errorDiv.style.display = 'block';
+            } else {
+                successDiv.textContent = 'Connexion réussie ! Redirection...';
+                successDiv.style.display = 'block';
+                localStorage.setItem('user_id', data.user.id);
+                localStorage.setItem('user_email', data.user.email);
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            }
+        });
+        
+        // Si déjà connecté, rediriger vers index
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
