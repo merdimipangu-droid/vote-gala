@@ -1,8 +1,9 @@
 // ========== CONNEXION SUPABASE ==========
-const SUPABASE_URL = "https://vakxwklnrgtiqmlggcyq.supabase.co";  // Ton URL
-const SUPABASE_ANON_KEY = "sb_publishable_gAbwfY1VE4AskWcDs8wrkw_m9Cjor1K";  // Ta publishable key
+const SUPABASE_URL = "https://vakxwklnrgtiqmlggcyq.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_gAbwfY1VE4AskWcDs8wrkw_m9Cjor1K";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-// ========== DONNÉES DES CATÉGORIES ET CANDIDATS ==========
+
+// ========== DONNÉES DES CATÉGORIES ET CANDIDATS (inchangé) ==========
 const categories = [
     { id: "Meilleur_Maestro", name: "🏆 Meilleur(e) Maestro", icon: '<i class="fas fa-chalkboard-user"></i>', description: "Direction et coordination" },
     { id: "Ponctualite", name: "⏰ Ponctualité", icon: '<i class="fas fa-clock"></i>', description: "Respect des horaires" },
@@ -84,7 +85,7 @@ const candidats = {
 // ========== VARIABLES GLOBALES ==========
 let currentUserVotes = new Set();
 let localVotes = [];
-let localVotants = [];
+let localVotants = {};
 let comments = [];
 let votesChart = null;
 let voteClosedBanner = null;
@@ -100,32 +101,115 @@ let allResultsPublished = localStorage.getItem('allResultsPublished') === 'true'
 const MAX_VOTES = 160;
 const CLOSURE_DATE = new Date(2026, 4, 16, 23, 59, 0);
 
-// ========== CHARGEMENT DES DONNÉES ==========
-function loadData() {
-    localVotes = JSON.parse(localStorage.getItem('gala_votes') || '[]');
-    localVotants = JSON.parse(localStorage.getItem('gala_votants') || '{}');
-    comments = JSON.parse(localStorage.getItem('gala_comments') || '[]');
+// ========== CHARGEMENT DES DONNÉES DEPUIS SUPABASE ==========
+async function loadVotesFromSupabase() {
+    const { data, error } = await supabase
+        .from('votes')
+        .select('*');
+    
+    if (error) {
+        console.error("Erreur chargement votes:", error);
+        return [];
+    }
+    return data;
 }
 
-function saveData() {
-    localStorage.setItem('gala_votes', JSON.stringify(localVotes));
-    localStorage.setItem('gala_votants', JSON.stringify(localVotants));
+async function loadVotantsFromSupabase() {
+    const { data, error } = await supabase
+        .from('votants')
+        .select('*');
+    
+    if (error) {
+        console.error("Erreur chargement votants:", error);
+        return {};
+    }
+    
+    const votantsObj = {};
+    data.forEach(v => {
+        if (!votantsObj[v.ip]) votantsObj[v.ip] = {};
+        votantsObj[v.ip][v.categorie] = true;
+    });
+    return votantsObj;
 }
 
-function saveComments() {
-    localStorage.setItem('gala_comments', JSON.stringify(comments));
+async function loadCommentsFromSupabase() {
+    const { data, error } = await supabase
+        .from('commentaires')
+        .select('*')
+        .order('created_at', { ascending: false });
+    
+    if (error) return [];
+    return data;
+}
+
+async function loadAllData() {
+    localVotes = await loadVotesFromSupabase();
+    localVotants = await loadVotantsFromSupabase();
+    comments = await loadCommentsFromSupabase();
+}
+
+// ========== SAUVEGARDE VERS SUPABASE ==========
+async function saveVoteToSupabase(vote) {
+    const { error } = await supabase
+        .from('votes')
+        .insert([vote]);
+    
+    if (error) console.error("Erreur sauvegarde vote:", error);
+    return !error;
+}
+
+async function markUserVotedInSupabase(ip, categorie) {
+    const { error } = await supabase
+        .from('votants')
+        .insert([{ ip: ip, categorie: categorie }]);
+    
+    if (error) console.error("Erreur marquage votant:", error);
+    return !error;
+}
+
+async function addCommentToSupabase(comment) {
+    const { error } = await supabase
+        .from('commentaires')
+        .insert([comment]);
+    
+    if (error) console.error("Erreur ajout commentaire:", error);
+    return !error;
+}
+
+async function deleteCommentFromSupabase(commentId) {
+    const { error } = await supabase
+        .from('commentaires')
+        .delete()
+        .eq('id', commentId);
+    
+    if (error) console.error("Erreur suppression commentaire:", error);
+    return !error;
+}
+
+// ========== FONCTIONS UTILITAIRES (gardées) ==========
+function getIP() {
+    let ip = localStorage.getItem('visitor_ip');
+    if (!ip) {
+        ip = 'visitor_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('visitor_ip', ip);
+    }
+    return ip;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function isSiteClosed() {
     return new Date() > CLOSURE_DATE;
 }
 
-function isMaxVotesReached() {
-    loadData();
+async function isMaxVotesReached() {
+    await loadAllData();
     return localVotes.length >= MAX_VOTES;
 }
-
-loadData();
 
 // ========== TOAST CLASSIQUE ==========
 function showToast(message, type = 'success') {
@@ -362,80 +446,76 @@ function lancerFeuArtificeResultats() {
     showToast("🏆 Félicitations à tous les gagnants ! 🏆", "success");
 }
 
-// ========== IP ==========
-function getIP() {
-    let ip = localStorage.getItem('visitor_ip');
-    if (!ip) {
-        ip = 'visitor_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('visitor_ip', ip);
-    }
-    return ip;
-}
-
-function chargerVotesExistants() {
+// ========== CHARGER VOTES EXISTANTS POUR L'UTILISATEUR ==========
+async function chargerVotesExistants() {
     const ip = getIP();
-    loadData();
-    categories.forEach(cat => {
-        if (localStorage.getItem(`device_voted_${ip}_${cat.id}`) === 'true') {
-            currentUserVotes.add(cat.id);
+    await loadAllData();
+    currentUserVotes.clear();
+    
+    // Parcourir les votants pour voir si l'utilisateur a voté
+    for (const [voterIp, categoriesVoted] of Object.entries(localVotants)) {
+        if (voterIp === ip) {
+            Object.keys(categoriesVoted).forEach(catId => {
+                currentUserVotes.add(catId);
+            });
         }
-    });
+    }
 }
 
-// ========== ESCAPE HTML ==========
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// ========== SYSTÈME DE COMMENTAIRES ==========
-function addComment(name, message) {
+// ========== SYSTÈME DE COMMENTAIRES (avec Supabase) ==========
+async function addComment(name, message) {
     if (!message.trim()) {
         showToast("Veuillez écrire un message avant d'envoyer.", "error");
         return false;
     }
     const newComment = {
-        id: Date.now(),
-        name: name.trim() || "Anonyme",
+        nom: name.trim() || "Anonyme",
         message: message.trim(),
-        date: new Date().toISOString(),
-        ip: getIP()
+        ip: getIP(),
+        created_at: new Date().toISOString()
     };
-    comments.unshift(newComment);
-    saveComments();
-    displayComments();
-    showToast("✓ Merci pour votre message !", "success");
-    return true;
+    
+    const success = await addCommentToSupabase(newComment);
+    if (success) {
+        await displayComments();
+        showToast("✓ Merci pour votre message !", "success");
+        return true;
+    }
+    return false;
 }
 
-function deleteComment(commentId, isAdmin = false) {
+async function deleteComment(commentId, isAdmin = false) {
     const isAdminLogged = localStorage.getItem('adminLoggedIn') === 'true';
     if (!isAdmin && !isAdminLogged) {
         showToast("Vous n'êtes pas autorisé à supprimer ce message.", "error");
         return;
     }
-    comments = comments.filter(c => c.id !== commentId);
-    saveComments();
-    displayComments();
-    if (document.getElementById('adminCommentsList')) chargerAdminComments();
-    showToast("Message supprimé.", "info");
+    const success = await deleteCommentFromSupabase(commentId);
+    if (success) {
+        await displayComments();
+        if (document.getElementById('adminCommentsList')) await chargerAdminComments();
+        showToast("Message supprimé.", "info");
+    }
 }
 
-function displayComments() {
+async function displayComments() {
     const container = document.getElementById('commentsList');
     if (!container) return;
+    
+    await loadAllData();
+    
     if (comments.length === 0) {
         container.innerHTML = '<div class="empty-comments"><i class="fas fa-comment-dots"></i><p>Soyez le premier à laisser un message !</p></div>';
         return;
     }
+    
     container.innerHTML = '';
     comments.forEach(comment => {
-        const commentDate = new Date(comment.date);
+        const commentDate = new Date(comment.created_at);
         const dateStr = commentDate.toLocaleString('fr-FR');
         const card = document.createElement('div');
         card.className = 'comment-card';
-        card.innerHTML = `<div class="comment-header"><div class="comment-author"><i class="fas fa-user-circle"></i><strong>${escapeHtml(comment.name)}</strong></div><div class="comment-date"><i class="far fa-calendar-alt"></i> ${dateStr}</div></div><div class="comment-message">${escapeHtml(comment.message)}</div>`;
+        card.innerHTML = `<div class="comment-header"><div class="comment-author"><i class="fas fa-user-circle"></i><strong>${escapeHtml(comment.nom)}</strong></div><div class="comment-date"><i class="far fa-calendar-alt"></i> ${dateStr}</div></div><div class="comment-message">${escapeHtml(comment.message)}</div>`;
         container.appendChild(card);
     });
 }
@@ -449,10 +529,10 @@ function initComments() {
     if (commentMessage && charCount) {
         commentMessage.addEventListener('input', () => { charCount.textContent = commentMessage.value.length; });
     }
-    submitBtn.onclick = () => {
+    submitBtn.onclick = async () => {
         const name = commentName ? commentName.value : '';
         const message = commentMessage ? commentMessage.value : '';
-        if (addComment(name, message)) {
+        if (await addComment(name, message)) {
             if (commentMessage) commentMessage.value = '';
             if (charCount) charCount.textContent = '0';
         }
@@ -460,19 +540,23 @@ function initComments() {
     displayComments();
 }
 
-function chargerAdminComments() {
+async function chargerAdminComments() {
     const container = document.getElementById('adminCommentsList');
     if (!container) return;
+    
+    await loadAllData();
+    
     if (comments.length === 0) {
         container.innerHTML = '<p style="text-align:center;padding:20px;">Aucun commentaire pour le moment.</p>';
         return;
     }
+    
     container.innerHTML = '';
     comments.forEach(comment => {
-        const date = new Date(comment.date);
+        const date = new Date(comment.created_at);
         const card = document.createElement('div');
         card.className = 'admin-comment-card';
-        card.innerHTML = `<div class="admin-comment-header"><strong><i class="fas fa-user"></i> ${escapeHtml(comment.name)}</strong><span>${date.toLocaleString('fr-FR')}</span></div><div class="admin-comment-message">${escapeHtml(comment.message)}</div><div class="admin-comment-ip">IP: ${comment.ip}</div><button class="admin-comment-delete-btn" data-id="${comment.id}"><i class="fas fa-trash-alt"></i> Supprimer</button>`;
+        card.innerHTML = `<div class="admin-comment-header"><strong><i class="fas fa-user"></i> ${escapeHtml(comment.nom)}</strong><span>${date.toLocaleString('fr-FR')}</span></div><div class="admin-comment-message">${escapeHtml(comment.message)}</div><div class="admin-comment-ip">IP: ${comment.ip}</div><button class="admin-comment-delete-btn" data-id="${comment.id}"><i class="fas fa-trash-alt"></i> Supprimer</button>`;
         container.appendChild(card);
         const deleteBtn = card.querySelector('.admin-comment-delete-btn');
         if (deleteBtn) deleteBtn.onclick = () => deleteComment(comment.id, true);
@@ -531,10 +615,10 @@ function selectionnerCategorie(categoryId) {
     });
 }
 
-// ========== VOTE ==========
-function voter(categorie, candidatNom) {
+// ========== VOTE (avec Supabase) ==========
+async function voter(categorie, candidatNom) {
     if (isSiteClosed()) { showVoteClosedWarning(); return; }
-    if (isMaxVotesReached()) { showVoteClosedWarning(); localStorage.setItem('voteStatus', 'closed'); return; }
+    if (await isMaxVotesReached()) { showVoteClosedWarning(); localStorage.setItem('voteStatus', 'closed'); return; }
     
     const currentStatus = localStorage.getItem('voteStatus') || 'open';
     if (currentStatus !== 'open') {
@@ -544,34 +628,50 @@ function voter(categorie, candidatNom) {
     }
     
     const ip = getIP();
-    if (localStorage.getItem(`device_voted_${ip}_${categorie}`) === 'true') {
+    
+    // Vérifier si déjà voté (dans Supabase)
+    if (localVotants[ip] && localVotants[ip][categorie]) {
         const catName = categories.find(c => c.id === categorie)?.name || categorie;
         showToast(`⚠️ Vous avez déjà voté pour la catégorie "${catName}" !`, "error");
         return;
     }
+    
     if (currentUserVotes.has(categorie)) { showToast("Vous avez déjà voté pour cette catégorie !", "error"); return; }
     
     const catName = categories.find(c => c.id === categorie)?.name || categorie;
-    loadData();
-    localVotes.push({ categorie, categorieNom: catName, candidatNom, timestamp: new Date().toISOString(), ip });
-    if (!localVotants[ip]) localVotants[ip] = {};
-    localVotants[ip][categorie] = true;
-    saveData();
-    currentUserVotes.add(categorie);
-    localStorage.setItem(`device_voted_${ip}_${categorie}`, 'true');
-    showToast(`✓ Vote pour ${candidatNom} (${catName}) enregistré !`, "success");
-    selectionnerCategorie(categorie);
-    afficherDashboard();
-    updateVotesChart();
+    
+    const vote = {
+        categorie: categorie,
+        categorie_nom: catName,
+        candidat_nom: candidatNom,
+        ip: ip,
+        created_at: new Date().toISOString()
+    };
+    
+    const voteSuccess = await saveVoteToSupabase(vote);
+    
+    if (voteSuccess) {
+        const markSuccess = await markUserVotedInSupabase(ip, categorie);
+        if (markSuccess) {
+            await loadAllData();
+            currentUserVotes.add(categorie);
+            showToast(`✓ Vote pour ${candidatNom} (${catName}) enregistré !`, "success");
+            selectionnerCategorie(categorie);
+            afficherDashboard();
+            updateVotesChart();
+        }
+    } else {
+        showToast("❌ Erreur lors de l'enregistrement du vote", "error");
+    }
 }
 
 // ========== DASHBOARD ==========
-function afficherDashboard() {
+async function afficherDashboard() {
     const dashboardDiv = document.getElementById('dashboardContent');
     if (!dashboardDiv) return;
     
     const ip = getIP();
-    loadData();
+    await loadAllData();
     
     // Récupérer UNIQUEMENT les votes de cet utilisateur
     const userVotes = localVotes.filter(vote => vote.ip === ip);
@@ -593,7 +693,7 @@ function afficherDashboard() {
     
     userVotes.forEach(vote => {
         if (resultatsParCategorie[vote.categorie]) {
-            resultatsParCategorie[vote.categorie].monVote = vote.candidatNom;
+            resultatsParCategorie[vote.categorie].monVote = vote.candidat_nom;
             resultatsParCategorie[vote.categorie].aVote = true;
         }
     });
@@ -605,7 +705,6 @@ function afficherDashboard() {
         card.className = 'result-card';
         
         if (data.aVote) {
-            // L'utilisateur a voté pour cette catégorie
             card.innerHTML = `
                 <h3><i class="fas fa-check-circle"></i> ${data.nom}</h3>
                 <div class="my-vote">
@@ -616,7 +715,6 @@ function afficherDashboard() {
                 </div>
             `;
         } else {
-            // L'utilisateur n'a pas encore voté pour cette catégorie
             card.innerHTML = `
                 <h3><i class="far fa-circle"></i> ${data.nom}</h3>
                 <div class="my-vote">
@@ -717,7 +815,6 @@ function showCategoryCountdown(categoryId, remaining) {
     resultsMessage.style.display = 'block';
     finalContainer.style.display = 'none';
     
-    // Cacher les éléments existants
     const waitingIcon = resultsMessage.querySelector('.waiting-icon');
     const titleEl = resultsMessage.querySelector('h2');
     const statusEl = resultsMessage.querySelector('.voting-status');
@@ -735,7 +832,6 @@ function showCategoryCountdown(categoryId, remaining) {
         resultsMessage.appendChild(timerElement);
     }
     
-    // Calcul du pourcentage initial
     const totalSeconds = 10;
     const initialPercent = (remaining / totalSeconds) * 100;
     
@@ -779,8 +875,7 @@ function showCategoryCountdown(categoryId, remaining) {
     `;
     timerElement.style.display = 'block';
     
-    // Animation du cercle
-    const circumference = 2 * Math.PI * 54; // ≈ 339.292
+    const circumference = 2 * Math.PI * 54;
     const circle = timerElement.querySelector('.countdown-progress-circle');
     const progressFill = timerElement.querySelector('#countdownProgressFill');
     const countdownValue = timerElement.querySelector('#countdownValue');
@@ -797,7 +892,6 @@ function showCategoryCountdown(categoryId, remaining) {
         
         if (countdownValue) {
             countdownValue.textContent = currentRemaining;
-            // Effet de pulsation
             countdownValue.style.transform = 'scale(1.2)';
             setTimeout(() => {
                 if (countdownValue) countdownValue.style.transform = 'scale(1)';
@@ -815,12 +909,10 @@ function showCategoryCountdown(categoryId, remaining) {
         if (currentRemaining <= 0) {
             clearInterval(interval);
             
-            // Animation de fin
             if (countdownValue) countdownValue.textContent = 'GO!';
             if (progressFill) progressFill.style.width = '100%';
             if (circle) circle.style.strokeDashoffset = '0';
             
-            // Ajouter une animation de flash
             const container = timerElement.querySelector('.countdown-container');
             if (container) {
                 container.style.animation = 'countdownFlash 0.5s ease';
@@ -848,13 +940,12 @@ function showCategoryCountdown(categoryId, remaining) {
     }, 1000);
 }
 
-function initResultsPage() {
+async function initResultsPage() {
     const resultsMessage = document.getElementById('resultsMessage');
     const finalContainer = document.getElementById('finalResultsContainer');
     if (!resultsMessage || !finalContainer) return;
     
-    // Recharger les données depuis localStorage
-    loadData();
+    await loadAllData();
     loadPublishedCategories();
     
     const currentStatus = localStorage.getItem('voteStatus') || 'open';
@@ -862,7 +953,6 @@ function initResultsPage() {
     const publishedCats = JSON.parse(localStorage.getItem('publishedCategories') || '[]');
     const pendingCategory = localStorage.getItem('pendingResultCategory');
     
-    // Cas 1 : Un timer est déjà en cours
     if (pendingCategory) {
         const timerEnd = localStorage.getItem('pendingCategoryTimerEnd');
         if (timerEnd && parseInt(timerEnd) > Date.now()) {
@@ -881,10 +971,8 @@ function initResultsPage() {
         return;
     }
     
-    // Cas 2 : Une catégorie vient d'être publiée (démarrer timer)
     const lastPublishedCategory = localStorage.getItem('lastPublishedCategory');
     if (lastPublishedCategory && !allPublished && publishedCats.length > 0) {
-        // Démarrer le timer pour cette catégorie
         localStorage.setItem('pendingResultCategory', lastPublishedCategory);
         localStorage.setItem('pendingCategoryTimerEnd', Date.now() + 10000);
         localStorage.removeItem('lastPublishedCategory');
@@ -893,7 +981,6 @@ function initResultsPage() {
         return;
     }
     
-    // Cas 3 : Tous les résultats sont publiés
     if (allPublished || currentStatus === 'published') {
         resultsMessage.style.display = 'none';
         finalContainer.style.display = 'block';
@@ -901,7 +988,6 @@ function initResultsPage() {
         return;
     }
     
-    // Cas 4 : Des catégories sont déjà publiées (afficher directement)
     if (publishedCats.length > 0) {
         resultsMessage.style.display = 'none';
         finalContainer.style.display = 'block';
@@ -910,12 +996,11 @@ function initResultsPage() {
         return;
     }
     
-    // Cas 5 : En attente
     resultsMessage.style.display = 'block';
     finalContainer.style.display = 'none';
 }
 
-function afficherResultatsParCategorie(categoryId) {
+async function afficherResultatsParCategorie(categoryId) {
     const grid = document.getElementById('finalResultsGrid');
     const winnerPhotoContainer = document.getElementById('winnerPhotoContainer');
     if (!grid) return;
@@ -923,10 +1008,10 @@ function afficherResultatsParCategorie(categoryId) {
     const cat = categories.find(c => c.id === categoryId);
     if (!cat) return;
     
-    loadData();
+    await loadAllData();
     const votesByCandidate = {};
     localVotes.filter(v => v.categorie === categoryId).forEach(vote => {
-        votesByCandidate[vote.candidatNom] = (votesByCandidate[vote.candidatNom] || 0) + 1;
+        votesByCandidate[vote.candidat_nom] = (votesByCandidate[vote.candidat_nom] || 0) + 1;
     });
     
     const sorted = Object.entries(votesByCandidate).sort((a, b) => b[1] - a[1]);
@@ -987,19 +1072,19 @@ function afficherResultatsParCategorie(categoryId) {
     grid.appendChild(congrats);
 }
 
-function afficherTousResultatsFinaux() {
+async function afficherTousResultatsFinaux() {
     const grid = document.getElementById('finalResultsGrid');
     const winnerPhotoContainer = document.getElementById('winnerPhotoContainer');
     if (!grid) return;
     if (winnerPhotoContainer) winnerPhotoContainer.style.display = 'none';
     
-    loadData();
+    await loadAllData();
     const resultats = {};
     categories.forEach(cat => { resultats[cat.id] = { nom: cat.name, icon: cat.icon, votes: {}, total: 0 }; });
     
     localVotes.forEach(vote => {
         if (resultats[vote.categorie]) {
-            resultats[vote.categorie].votes[vote.candidatNom] = (resultats[vote.categorie].votes[vote.candidatNom] || 0) + 1;
+            resultats[vote.categorie].votes[vote.candidat_nom] = (resultats[vote.categorie].votes[vote.candidat_nom] || 0) + 1;
             resultats[vote.categorie].total++;
         }
     });
@@ -1067,7 +1152,7 @@ function afficherTousResultatsFinaux() {
     }
 }
 
-// ========== PAGE ADMIN ==========
+// ========== PAGE ADMIN (gardée mais avec async) ==========
 function updateVoteStatusUI() {
     const statusBadge = document.getElementById('statusBadge');
     const statusText = document.getElementById('statusText');
@@ -1189,8 +1274,6 @@ function executePublishCategory(categoryId) {
     localStorage.removeItem('timerEndTime');
     renderPublishCategoriesGrid();
     
-    // 🔥 FORCER LA SYNCHRONISATION
-    // Déclencher un événement storage manuellement
     window.dispatchEvent(new StorageEvent('storage', {
         key: 'lastPublishedCategory',
         newValue: categoryId,
@@ -1212,12 +1295,12 @@ function savePublishedCategories() {
 
 function isCategoryPublished(categoryId) { return publishedCategories.includes(categoryId); }
 
-function publishCategory(categoryId) {
+async function publishCategory(categoryId) {
     if (isCategoryPublished(categoryId)) { showToast(`Les résultats de cette catégorie ont déjà été publiés.`, "error"); return; }
     const currentStatus = localStorage.getItem('voteStatus') || 'open';
     if (currentStatus !== 'closed') { showToast("Veuillez d'abord clôturer les votes.", "error"); return; }
     
-    loadData();
+    await loadAllData();
     const votesForCategory = localVotes.filter(v => v.categorie === categoryId);
     if (votesForCategory.length === 0) {
         showToast("❌ Cette catégorie n'a reçu aucun vote. Publication impossible.", "error");
@@ -1236,7 +1319,6 @@ function publishAllCategories() {
     if (unpublished.length === 0) { showToast("Toutes les catégories sont déjà publiées.", "info"); return; }
     
     const noVotesCats = [];
-    loadData();
     unpublished.forEach(cat => {
         const votesCount = localVotes.filter(v => v.categorie === cat.id).length;
         if (votesCount === 0) noVotesCats.push(cat.name);
@@ -1259,16 +1341,16 @@ function publishAllCategories() {
     showToast("🎉 Tous les résultats ont été publiés !", "success");
 }
 
-function renderPublishCategoriesGrid() {
+async function renderPublishCategoriesGrid() {
     const container = document.getElementById('publishCategoriesGrid');
     if (!container) return;
     loadPublishedCategories();
-    loadData();
+    await loadAllData();
     const votesByCategory = {};
     categories.forEach(cat => { votesByCategory[cat.id] = {}; });
     localVotes.forEach(vote => {
         if (votesByCategory[vote.categorie]) {
-            votesByCategory[vote.categorie][vote.candidatNom] = (votesByCategory[vote.categorie][vote.candidatNom] || 0) + 1;
+            votesByCategory[vote.categorie][vote.candidat_nom] = (votesByCategory[vote.categorie][vote.candidat_nom] || 0) + 1;
         }
     });
     container.innerHTML = '';
@@ -1362,10 +1444,10 @@ function animateChartData(newData) {
     }, stepDuration);
 }
 
-function initVotesChart() {
+async function initVotesChart() {
     const ctx = document.getElementById('votesChart');
     if (!ctx) return;
-    loadData();
+    await loadAllData();
     const votesByCategory = {};
     categories.forEach(cat => { votesByCategory[cat.id] = 0; });
     localVotes.forEach(vote => { if (votesByCategory[vote.categorie] !== undefined) votesByCategory[vote.categorie]++; });
@@ -1418,8 +1500,8 @@ function initVotesChart() {
     });
 }
 
-function updateVotesChart() {
-    loadData();
+async function updateVotesChart() {
+    await loadAllData();
     const votesByCategory = {};
     categories.forEach(cat => { votesByCategory[cat.id] = 0; });
     localVotes.forEach(vote => { if (votesByCategory[vote.categorie] !== undefined) votesByCategory[vote.categorie]++; });
@@ -1428,7 +1510,7 @@ function updateVotesChart() {
     if (votesChart) {
         animateChartData(votesData);
     } else {
-        initVotesChart();
+        await initVotesChart();
     }
 }
 
@@ -1488,12 +1570,12 @@ function initAdmin() {
             } else { loginError.textContent = "Code incorrect. Accès refusé."; }
         };
     }
-    document.getElementById('refreshBtn')?.addEventListener('click', () => { 
-        loadData();
-        chargerAdminData(); 
-        initVotesChart(); 
-        renderPublishCategoriesGrid();
-        chargerAdminComments();
+    document.getElementById('refreshBtn')?.addEventListener('click', async () => { 
+        await loadAllData();
+        await chargerAdminData(); 
+        await initVotesChart(); 
+        await renderPublishCategoriesGrid();
+        await chargerAdminComments();
         showToast("Données rafraîchies !", "info");
     });
     document.getElementById('exportBtn')?.addEventListener('click', exporterDonneesAdmin);
@@ -1501,25 +1583,33 @@ function initAdmin() {
     document.getElementById('pauseVotesBtn')?.addEventListener('click', () => setVoteStatus('paused'));
     document.getElementById('closeVotesBtn')?.addEventListener('click', () => { if(confirm("Confirmez-vous la clôture des votes ?")) setVoteStatus('closed'); });
     document.getElementById('publishAllResultsBtn')?.addEventListener('click', publishAllCategories);
-    document.getElementById('resetAllBtn')?.addEventListener('click', () => {
+    document.getElementById('resetAllBtn')?.addEventListener('click', async () => {
         if(confirm("⚠️ RÉINITIALISATION COMPLÈTE ?\nCette action est IRRÉVERSIBLE !")) {
+            // Supprimer toutes les données dans Supabase
+            await supabase.from('votes').delete().neq('id', 0);
+            await supabase.from('votants').delete().neq('id', 0);
+            await supabase.from('commentaires').delete().neq('id', 0);
+            
             localVotes = []; localVotants = {}; currentUserVotes.clear(); comments = []; publishedCategories = []; allResultsPublished = false;
-            saveData(); saveComments();
+            savePublishedCategories();
             localStorage.removeItem('visitor_ip'); localStorage.removeItem('adminLoggedIn'); localStorage.removeItem('resultsPublished');
             localStorage.removeItem('resultsDisplayed'); localStorage.removeItem('timerEndTime'); localStorage.removeItem('voteStatus');
-            localStorage.removeItem('publishedCategories'); localStorage.removeItem('allResultsPublished');
             clearDisplayedCategories();
             for(let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if(key && key.startsWith('device_voted_')) localStorage.removeItem(key); }
             setVoteStatus('open');
             localStorage.setItem('resultsPublished', 'false');
-            chargerAdminData(); chargerAdminComments(); if (votesChart) votesChart.destroy(); initVotesChart(); renderPublishCategoriesGrid();
+            await chargerAdminData(); 
+            await chargerAdminComments(); 
+            if (votesChart) votesChart.destroy(); 
+            await initVotesChart(); 
+            await renderPublishCategoriesGrid();
             showToast("✅ Toutes les données ont été réinitialisées !", "success");
         }
     });
 }
 
 async function chargerAdminData() {
-    loadData();
+    await loadAllData();
     const totalVotes = localVotes.length;
     const totalVotants = Object.keys(localVotants).length;
     const tauxParticipation = totalVotes > 0 ? ((totalVotes / MAX_VOTES) * 100).toFixed(1) : 0;
@@ -1541,7 +1631,7 @@ async function chargerAdminData() {
         categories.forEach(cat => { resultatsParCategorie[cat.id] = { nom: cat.name, votes: {}, total: 0 }; });
         localVotes.forEach(vote => { 
             if(resultatsParCategorie[vote.categorie]) { 
-                resultatsParCategorie[vote.categorie].votes[vote.candidatNom] = (resultatsParCategorie[vote.categorie].votes[vote.candidatNom] || 0) + 1; 
+                resultatsParCategorie[vote.categorie].votes[vote.candidat_nom] = (resultatsParCategorie[vote.categorie].votes[vote.candidat_nom] || 0) + 1; 
                 resultatsParCategorie[vote.categorie].total++; 
             } 
         });
@@ -1568,12 +1658,12 @@ async function chargerAdminData() {
         } else {
             tbody.innerHTML = '';
             [...localVotes].reverse().forEach(vote => {
-                const date = new Date(vote.timestamp);
+                const date = new Date(vote.created_at);
                 tbody.innerHTML += `
                     <tr>
                         <td>${date.toLocaleString('fr-FR')}</td>
-                        <td><strong>${vote.categorieNom}</strong></td>
-                        <td>${vote.candidatNom}</td>
+                        <td><strong>${vote.categorie_nom}</strong></td>
+                        <td>${vote.candidat_nom}</td>
                         <td><code>${vote.ip}</code></td>
                     </tr>
                 `;
@@ -1584,7 +1674,6 @@ async function chargerAdminData() {
 }
 
 function exporterDonneesAdmin() {
-    loadData();
     const data = { 
         exportDate: new Date().toISOString(), 
         evenement: "Gala 25 ans", 
@@ -1643,45 +1732,16 @@ function initPhotoModal() {
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.style.display === 'block') closePhotoModal(); });
 }
 
-// ========== INITIALISATION ==========
-document.addEventListener('DOMContentLoaded', () => {
-    if (isSiteClosed()) {
-        document.body.innerHTML = '<div class="site-closed"><i class="fas fa-lock"></i><h1>Votes terminés</h1><p>Merci pour votre participation !</p><p>Le gala du 25e anniversaire est maintenant clos.</p></div>';
-        document.body.style.background = '#0a0a0a';
-        document.body.style.color = '#fff';
-        document.body.style.display = 'flex';
-        document.body.style.justifyContent = 'center';
-        document.body.style.alignItems = 'center';
-        document.body.style.minHeight = '100vh';
-        return;
-    }
-    checkAndShowVoteStatus();
-    initPhotoModal();
-    document.getElementById('fireworksBtn')?.addEventListener('click', lancerFeuArtifice);
-    document.getElementById('backBtn')?.addEventListener('click', () => {
-        document.getElementById('candidatesPanel').style.display = 'none';
-        document.querySelector('.categories-wrapper').style.display = 'block';
-    });
-    if (document.getElementById('champagneGlasses')) initChampagneAnimation();
-    initComments();
-    const path = window.location.pathname;
-    if (path.includes('resultat.html')) initResultsPage();
-    else if (path.includes('admin.html')) initAdmin();
-    else { chargerVotesExistants(); afficherCategories(); afficherDashboard(); }
-});
 // ========== SYNCHRONISATION ENTRE PAGES ==========
 function setupCrossTabSync() {
-    // Écouter les changements de localStorage (entre onglets)
     window.addEventListener('storage', (e) => {
         if (e.key === 'publishedCategories' || e.key === 'allResultsPublished' || e.key === 'lastPublishedCategory') {
             console.log('🔄 Synchronisation détectée :', e.key, e.newValue);
             
-            // Si on est sur la page résultats, recharger l'affichage
             if (window.location.pathname.includes('resultat.html')) {
                 initResultsPage();
             }
             
-            // Si on est sur la page admin, recharger la grille
             if (window.location.pathname.includes('admin.html')) {
                 renderPublishCategoriesGrid();
             }
@@ -1689,13 +1749,10 @@ function setupCrossTabSync() {
     });
 }
 
-// Appeler cette fonction dans DOMContentLoaded
-setupCrossTabSync();  
-// ========== BOUTON POUR FORCER L'AFFICHAGE (NETLIFY) ==========
+// ========== BOUTON POUR FORCER L'AFFICHAGE ==========
 function addForceRefreshButton() {
     if (!window.location.pathname.includes('resultat.html')) return;
     
-    // Vérifier si le bouton existe déjà
     if (document.getElementById('forceRefreshBtn')) return;
     
     const btn = document.createElement('button');
@@ -1725,9 +1782,8 @@ function addForceRefreshButton() {
         btn.style.transform = 'scale(1)';
         btn.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
     };
-    btn.onclick = () => {
-        // Forcer le rechargement des résultats
-        loadData();
+    btn.onclick = async () => {
+        await loadAllData();
         loadPublishedCategories();
         const publishedCats = JSON.parse(localStorage.getItem('publishedCategories') || '[]');
         const allPublished = localStorage.getItem('allResultsPublished') === 'true';
@@ -1737,13 +1793,13 @@ function addForceRefreshButton() {
         if (allPublished || publishedCats.length === categories.length) {
             resultsMessage.style.display = 'none';
             finalContainer.style.display = 'block';
-            afficherTousResultatsFinaux();
+            await afficherTousResultatsFinaux();
             lancerFeuArtificeResultats();
         } else if (publishedCats.length > 0) {
             resultsMessage.style.display = 'none';
             finalContainer.style.display = 'block';
             const lastCat = publishedCats[publishedCats.length - 1];
-            afficherResultatsParCategorie(lastCat);
+            await afficherResultatsParCategorie(lastCat);
             lancerFeuArtificeResultats();
         } else {
             showToast("Aucun résultat publié pour le moment.", "info");
@@ -1753,4 +1809,42 @@ function addForceRefreshButton() {
     document.body.appendChild(btn);
 }
 
-// Appeler cette fonction dans DOMContentLoaded, après initResultsPage()
+// ========== INITIALISATION ==========
+document.addEventListener('DOMContentLoaded', async () => {
+    if (isSiteClosed()) {
+        document.body.innerHTML = '<div class="site-closed"><i class="fas fa-lock"></i><h1>Votes terminés</h1><p>Merci pour votre participation !</p><p>Le gala du 25e anniversaire est maintenant clos.</p></div>';
+        document.body.style.background = '#0a0a0a';
+        document.body.style.color = '#fff';
+        document.body.style.display = 'flex';
+        document.body.style.justifyContent = 'center';
+        document.body.style.alignItems = 'center';
+        document.body.style.minHeight = '100vh';
+        return;
+    }
+    
+    checkAndShowVoteStatus();
+    initPhotoModal();
+    document.getElementById('fireworksBtn')?.addEventListener('click', lancerFeuArtifice);
+    document.getElementById('backBtn')?.addEventListener('click', () => {
+        document.getElementById('candidatesPanel').style.display = 'none';
+        document.querySelector('.categories-wrapper').style.display = 'block';
+    });
+    if (document.getElementById('champagneGlasses')) initChampagneAnimation();
+    initComments();
+    setupCrossTabSync();
+    
+    const path = window.location.pathname;
+    if (path.includes('resultat.html')) {
+        await initResultsPage();
+        addForceRefreshButton();
+    }
+    else if (path.includes('admin.html')) {
+        initAdmin();
+    }
+    else { 
+        await chargerVotesExistants(); 
+        afficherCategories(); 
+        await afficherDashboard(); 
+        startRealtimeResultsListener();
+    }
+});
