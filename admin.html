@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Admin - Gala 25 ans</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23D4AF37' stroke='%23B8960C' stroke-width='2'/%3E%3Ctext x='50' y='68' font-size='40' text-anchor='middle' fill='%230a0a0a' font-weight='bold'%3E25%3C/text%3E%3Ctext x='50' y='45' font-size='12' text-anchor='middle' fill='%230a0a0a' font-weight='bold'%3EANS%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        /* Styles supplémentaires pour l'administration */
+        .admin-body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .admin-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            border: 1px solid rgba(212,175,55,0.3);
+        }
+        .admin-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        .admin-logo i {
+            font-size: 2.5rem;
+            color: var(--gold);
+        }
+        .admin-logo h1 {
+            color: var(--gold);
+            font-size: 1.8rem;
+        }
+        .admin-badge {
+            display: inline-block;
+            background: rgba(212,175,55,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--gold);
+        }
+        .admin-login-zone {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+        .login-card {
+            background: rgba(10,10,10,0.95);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            border: 1px solid rgba(212,175,55,0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+        .login-icon i {
+            font-size: 3rem;
+            color: var(--gold);
+        }
+        .admin-btn {
+            background: linear-gradient(135deg, #D4AF37, #B8960C);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            color: #0a0a0a;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .admin-input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: 10px;
+            color: white;
+        }
+        .login-error {
+            color: #e74c3c;
+            margin-top: 10px;
+        }
+        .admin-zone {
+            display: none;
+        }
+        .status-card {
+            background: rgba(0,0,0,0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(212,175,55,0.3);
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        .status-badge.open { background: rgba(46,204,113,0.2); color: #2ecc71; border: 1px solid #2ecc71; }
+        .status-badge.paused { background: rgba(241,196,15,0.2); color: #f1c40f; border: 1px solid #f1c40f; }
+        .status-badge.closed { background: rgba(231,76,60,0.2); color: #e74c3c; border: 1px solid #e74c3c; }
+        .status-badge.published { background: rgba(212,175,55,0.2); color: var(--gold); border: 1px solid var(--gold); }
+        .admin-section {
+            background: rgba(0,0,0,0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(212,175,55,0.3);
+        }
+        .admin-section h3 {
+            color: var(--gold);
+            margin-bottom: 20px;
+        }
+        .vote-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .control-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .control-btn.open { background: #2ecc71; color: white; }
+        .control-btn.pause { background: #f1c40f; color: #0a0a0a; }
+        .control-btn.close { background: #e74c3c; color: white; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--gold);
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: #b0b0b0;
+        }
+        .publish-categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .publish-category-card {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .publish-category-card:hover:not(.disabled):not(.published) {
+            transform: translateY(-3px);
+            background: rgba(212,175,55,0.2);
+        }
+        .publish-category-card.published {
+            opacity: 0.6;
+            background: rgba(46,204,113,0.1);
+            border: 1px solid #2ecc71;
+        }
+        .publish-category-card.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .publish-all-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #D4AF37, #B8960C);
+            border: none;
+            border-radius: 10px;
+            color: #0a0a0a;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .publish-all-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .admin-table th, .admin-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .admin-table th {
+            color: var(--gold);
+        }
+        .category-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .category-summary-card {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .admin-comments-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .admin-comment-card {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .admin-comment-delete-btn {
+            background: #e74c3c;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .danger-section {
+            border: 1px solid #e74c3c;
+        }
+        .danger-btn {
+            background: #e74c3c;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+        }
+        .filter-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: 8px;
+            color: white;
+        }
+        .table-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .loading-text {
+            text-align: center;
+            padding: 40px;
+            color: #b0b0b0;
+        }
+        .control-note, .publish-note, .danger-note {
+            font-size: 0.8rem;
+            color: #b0b0b0;
+            margin-top: 10px;
+        }
+        .system-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .admin-actions-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .admin-action-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+        }
+        .admin-action-btn.gold {
+            background: linear-gradient(135deg, #D4AF37, #B8960C);
+            color: #0a0a0a;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            z-index: 1000;
+            display: none;
+        }
+        .toast.show {
+            display: block;
+            animation: fadeInOut 3s ease;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(100%); }
+            10% { opacity: 1; transform: translateX(0); }
+            90% { opacity: 1; transform: translateX(0); }
+            100% { opacity: 0; transform: translateX(100%); }
+        }
+    </style>
+</head>
+<body class="admin-body">
+
+    <div class="admin-container">
+        <!-- En-tête -->
+        <div class="admin-header">
+            <div class="admin-logo">
+                <i class="fas fa-crown"></i>
+                <h1>Panneau Administrateur</h1>
+            </div>
+            <p>Gestion du vote en temps réel - Gala 25 ans</p>
+            <div class="admin-badge">
+                <i class="fas fa-shield-alt"></i> Accès restreint
+            </div>
+        </div>
+
+        <!-- Zone de connexion -->
+        <div id="loginZone" class="admin-login-zone">
+            <div class="login-card">
+                <div class="login-icon">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h2>Accès administrateur</h2>
+                <p>Veuillez entrer le code secret</p>
+                <form onsubmit="return false;">
+                    <input type="password" id="adminCode" class="admin-input" placeholder="Code d'accès" autocomplete="off">
+                </form>
+                <button id="loginBtn" class="admin-btn">Se connecter</button>
+                <p id="loginError" class="login-error"></p>
+            </div>
+        </div>
+
+        <!-- Zone administrateur (cachée par défaut) -->
+        <div id="adminZone" class="admin-zone">
+            
+            <!-- Status actuel -->
+            <div class="status-card">
+                <div class="status-header">
+                    <i class="fas fa-info-circle"></i>
+                    <h3>État actuel du vote</h3>
+                </div>
+                <div class="status-display">
+                    <span class="status-badge open" id="statusBadge">🟢 Votes ouverts</span>
+                    <span id="statusText">Les utilisateurs peuvent voter normalement</span>
+                </div>
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="admin-actions-bar">
+                <button id="refreshBtn" class="admin-action-btn">
+                    <i class="fas fa-sync-alt"></i> Rafraîchir
+                </button>
+                <button id="exportBtn" class="admin-action-btn gold">
+                    <i class="fas fa-download"></i> Exporter (JSON)
+                </button>
+            </div>
+
+            <!-- Contrôle du vote -->
+            <div class="admin-section">
+                <h3><i class="fas fa-sliders-h"></i> Contrôle du vote</h3>
+                <div class="vote-controls">
+                    <button id="openVotesBtn" class="control-btn open">
+                        <i class="fas fa-play"></i> Ouvrir les votes
+                    </button>
+                    <button id="pauseVotesBtn" class="control-btn pause">
+                        <i class="fas fa-pause"></i> Mettre en pause
+                    </button>
+                    <button id="closeVotesBtn" class="control-btn close">
+                        <i class="fas fa-stop"></i> Clôturer les votes
+                    </button>
+                </div>
+                <p class="control-note">
+                    <i class="fas fa-info-circle"></i> 
+                    <strong>Ouvert</strong> : Les utilisateurs peuvent voter<br>
+                    <strong>Pause</strong> : Suspension temporaire<br>
+                    <strong>Clôturé</strong> : Fin des votes, publication possible
+                </p>
+            </div>
+
+            <!-- Publication des résultats par catégorie -->
+            <div class="admin-section">
+                <h3><i class="fas fa-champagne-glasses"></i> Publication des résultats par catégorie</h3>
+                <div class="publish-categories-grid" id="publishCategoriesGrid">
+                    <div class="loading-text"><i class="fas fa-spinner fa-pulse"></i> Chargement...</div>
+                </div>
+                <div class="publish-all-container">
+                    <button id="publishAllResultsBtn" class="publish-all-btn" disabled>
+                        <i class="fas fa-fire"></i> 🎉 PUBLIER TOUS LES RÉSULTATS 🎉
+                    </button>
+                </div>
+                <p class="publish-note">
+                    ⚠️ Cliquez sur une catégorie pour publier son résultat.<br>
+                    Les catégories publiées deviennent visibles sur la page des résultats.
+                </p>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="admin-section">
+                <h3><i class="fas fa-chart-pie"></i> Statistiques en direct</h3>
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card"><div class="stat-number">-</div><div class="stat-label">Votes totaux</div></div>
+                    <div class="stat-card"><div class="stat-number">-</div><div class="stat-label">Votants uniques</div></div>
+                    <div class="stat-card"><div class="stat-number">-</div><div class="stat-label">Catégories</div></div>
+                    <div class="stat-card"><div class="stat-number">-</div><div class="stat-label">Participation</div></div>
+                    <div class="stat-card"><div class="stat-number">-</div><div class="stat-label">Votes restants</div></div>
+                    <div class="stat-card"><div class="stat-number">160</div><div class="stat-label">Votes maximum</div></div>
+                </div>
+            </div>
+
+            <!-- Graphique d'évolution -->
+            <div class="admin-section">
+                <h3><i class="fas fa-chart-line"></i> Évolution des votes</h3>
+                <canvas id="votesChart" style="max-height: 300px; width: 100%;"></canvas>
+            </div>
+
+            <!-- Résumé par catégorie -->
+            <div class="admin-section">
+                <h3><i class="fas fa-chart-simple"></i> Résumé par catégorie</h3>
+                <div id="categorySummary" class="category-summary">
+                    <div class="loading-text"><i class="fas fa-spinner fa-pulse"></i> Chargement...</div>
+                </div>
+            </div>
+
+            <!-- Liste détaillée des votes -->
+            <div class="admin-section">
+                <h3><i class="fas fa-table-list"></i> Liste détaillée des votes</h3>
+                <div class="table-filters">
+                    <input type="text" id="filterCategory" class="filter-input" placeholder="Filtrer par catégorie...">
+                    <input type="text" id="filterCandidate" class="filter-input" placeholder="Filtrer par candidat...">
+                </div>
+                <div class="table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Date/Heure</th><th>Catégorie</th><th>Candidat</th><th>ID Utilisateur</th></tr>
+                        </thead>
+                        <tbody id="votesTableBody">
+                            <tr><td colspan="4" class="loading-cell"><i class="fas fa-spinner fa-pulse"></i> Chargement...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Gestion des commentaires -->
+            <div class="admin-section">
+                <h3><i class="fas fa-comments"></i> Gestion des commentaires</h3>
+                <div id="adminCommentsList" class="admin-comments-list">
+                    <div class="loading-text"><i class="fas fa-spinner fa-pulse"></i> Chargement...</div>
+                </div>
+            </div>
+
+            <!-- Zone de danger - Réinitialisation --> 
+            <div class="admin-section danger-section">
+                <h3><i class="fas fa-exclamation-triangle"></i> Zone de danger</h3>
+                <button id="resetAllBtn" class="danger-btn">
+                    <i class="fas fa-trash-alt"></i> 🔴 RÉINITIALISER TOUTES LES DONNÉES
+                </button>
+                <p class="danger-note">⚠️ Cette action est IRRÉVERSIBLE. Supprime tous les votes et commentaires.</p>
+            </div>
+
+            <!-- Informations système -->
+            <div class="admin-section">
+                <h3><i class="fas fa-info-circle"></i> Informations</h3>
+                <div class="system-info">
+                    <div class="info-row"><span class="info-label"><i class="fas fa-database"></i> Base de données :</span><span class="info-value">Supabase</span></div>
+                    <div class="info-row"><span class="info-label"><i class="fas fa-code"></i> Développeur :</span><span class="info-value">Merdi Mambwiya & Paul Mambwiya</span></div>
+                    <div class="info-row"><span class="info-label"><i class="fas fa-envelope"></i> Contact :</span><span class="info-value">merdimambwiya@gmail.com / paulbeverly001@gmail.com</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
