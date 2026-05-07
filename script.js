@@ -12,7 +12,7 @@ const categories = [
     { id: "Meilleure_Soprane", name: "🎵 Meilleure Soprane", icon: '<i class="fas fa-music"></i>', description: "Voix cristalline" },
     { id: "Meilleur_Alti", name: "🎶 Meilleur Alti", icon: '<i class="fas fa-drumstick-bite"></i>', description: "Chaleur vocale" },
     { id: "Meilleur_Tenor", name: "🎼 Meilleur Ténor", icon: '<i class="fas fa-voice"></i>', description: "Puissance et douceur" },
-    { id: "Meilleur_Basse", name: "🎸 Meilleur Basse", icon: '<i class="fas fa-guitar"></i>', description: "Profondeur remarquable" }, 
+    { id: "Meilleur_Basse", name: "🎸 Meilleur Basse", icon: '<i class="fas fa-guitar"></i>', description: "Profondeur remarquable" },
     { id: "Innovation", name: "💡 Innovation", icon: '<i class="fas fa-lightbulb"></i>', description: "Créativité musicale" }
 ];
 
