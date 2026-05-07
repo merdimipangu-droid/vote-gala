@@ -1,9 +1,4 @@
-// ========== CONNEXION SUPABASE ==========
-const SUPABASE_URL = "https://vakxwklnrgtiqmlggcyq.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_gAbwfY1VE4AskWcDs8wrkw_m9Cjor1K";
 
-// Correction : utilisez supabase (pas supabaseClient)
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ========== DONNÉES DES CATÉGORIES ET CANDIDATS ==========
 const categories = [
     { id: "Meilleur_Maestro", name: "🏆 Meilleur(e) Maestro", icon: '<i class="fas fa-chalkboard-user"></i>', description: "Direction et coordination" },
