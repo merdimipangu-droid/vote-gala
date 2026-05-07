@@ -14,66 +14,66 @@ const categories = [
 
 const candidats = {
     Meilleur_Maestro: [
-        { id: "dt1", nom: "Maestro Noella", description: "Direction inspirante", photo: "assets/maestro/Nono1.jpeg" },
-        { id: "dt2", nom: "Maestro Pauline", description: " passion", photo: "assets/maestro/pauline1.jpeg" },
-        { id: "dt3", nom: "Maestro Alain", description: "le maître", photo: "assets/maestro/alain1.jpeg" },
+        { id: "dt1", nom: "Maestro Noella", description: "Direction inspirante", photo: "assets/maestro/nono.jpeg" },
+        { id: "dt2", nom: "Maestro Pauline", description: " passion", photo: "assets/maestro/pauline.jpeg" },
+        { id: "dt3", nom: "Maestro Alain", description: "le maître", photo: "assets/maestro/alain.jpeg" },
         { id: "dt4", nom: "Maestro Gaby", description: "Précision", photo: "assets/maestro/gaby.jpeg" },
-        { id: "dt5", nom: "Maestro Dany", description: "créativité", photo: "assets/maestro/dany1.jpeg" }
+        { id: "dt5", nom: "Maestro Dany", description: "créativité", photo: "assets/maestro/dany.jpeg" }
     ],
     Ponctualite: [
-        { id: "pon1", nom: "Manu", description: "arrive très en avance par peur d'être en retard.", photo: "assets/ponctualite/manu1.jpeg" },
-        { id: "pon2", nom: "Chloé", description: "arrive 10 minutes avant, prête à commencer.", photo: "assets/ponctualite/chloé1.jpeg" },
-        { id: "pon3", nom: "Djessy", description: "30 minutes minimum, désorganisée mais attachante", photo: "assets/Ponctualite/djessy3.jpeg" },
+        { id: "pon1", nom: "Manu", description: "arrive très en avance par peur d'être en retard.", photo: "assets/ponctualite/manu.jpeg" },
+        { id: "pon2", nom: "Chloé", description: "arrive 10 minutes avant, prête à commencer.", photo: "assets/ponctualite/chloe.jpeg" },
+        { id: "pon3", nom: "Djessy", description: "30 minutes minimum, désorganisée mais attachante", photo: "assets/Ponctualite/djessy.jpeg" },
         { id: "pon4", nom: "Keren", description: "toujours pile à l'heure, pas une minute avant.", photo: "assets/Ponctualite/keren.jpeg" },
         { id: "pon5", nom: "Emilie", description: "5 à 15 minutes, avec une bonne excuse", photo: "assets/Ponctualite/emilie.jpeg" }
     ],
     Meilleur_Soliste: [
-        { id: "sol1", nom: "Amélia", description: "Voix envoûtante", photo: "assets/soliste/Amelia2.jpeg" },
-        { id: "sol2", nom: "Pace", description: "Talent exceptionnel", photo: "assets/soliste/pace1.jpeg" },
+        { id: "sol1", nom: "Amélia", description: "Voix envoûtante", photo: "assets/soliste/amelia.jpeg" },
+        { id: "sol2", nom: "Pace", description: "Talent exceptionnel", photo: "assets/soliste/pace.jpeg" },
         { id: "sol3", nom: "Francillia", description: "Émotion pure", photo: "assets/soliste/francillia.jpeg" },
-        { id: "sol4", nom: "Winner", description: "Puissance vocale", photo: "assets/soliste/winner2.jpeg" },
-        { id: "sol5", nom: "Djessy", description: "Charisme scénique", photo: "assets/soliste/Djessy3.jpeg" }
+        { id: "sol4", nom: "Winner", description: "Puissance vocale", photo: "assets/soliste/winner.jpeg" },
+        { id: "sol5", nom: "Djessy", description: "Charisme scénique", photo: "assets/soliste/djessy.jpeg" }
     ],
     Sociabilite: [
-        { id: "soc1", nom: "Dada", description: "très ouverte, réceptive et aimante", photo: "assets/social/Dada1.jpeg" },
-        { id: "soc2", nom: "Manu", description: "parle à tout le monde, fédère le groupe.", photo: "assets/social/Manu2.jpeg" },
-        { id: "soc3", nom: "Grâce-julie", description: "souriante mais peu bavard, préfère écouter", photo: "assets/social/julie1.jpeg" },
-        { id: "soc4", nom: "M.Noella", description: "La maman de tous", photo: "assets/social/luz1.jpeg" },
+        { id: "soc1", nom: "Dada", description: "très ouverte, réceptive et aimante", photo: "assets/social/dada.jpeg" },
+        { id: "soc2", nom: "Manu", description: "parle à tout le monde, fédère le groupe.", photo: "assets/social/manu.jpeg" },
+        { id: "soc3", nom: "Grâce-julie", description: "souriante mais peu bavard, préfère écouter", photo: "assets/social/julie.jpeg" },
+        { id: "soc4", nom: "M.Noella", description: "La maman de tous", photo: "assets/social/luz.jpeg" },
         { id: "soc5", nom: "Emilie", description: "raconte des histoires animées, rit fort.", photo: "assets/social/emilie.jpeg" }
     ],
     Meilleure_Soprane: [
-        { id: "sop1", nom: "Amélia", description: "Un frisson d'amour au creux de l'oreille.", photo: "assets/soprano/Amelia1.jpeg" },
-        { id: "sop2", nom: "Pace", description: "Sa voix, un baiser déposé sur un pétale de rose.", photo: "assets/soprano/pace1.jpeg" },
-        { id: "sop3", nom: "Dada", description: "Un soupir de lune dans une nuit d'été.", photo: "assets/soprano/Dada3.jpeg" },
-        { id: "sop4", nom: "M.Pauline", description: "Un je t'aime chuchoté par le vent.", photo: "assets/soprano/pauline1.jpeg" },
-        { id: "sop5", nom: "Cynthia", description: "Une caresse de soie sur la peau.", photo: "assets/soprano/Cycy1.jpeg" }
+        { id: "sop1", nom: "Amélia", description: "Un frisson d'amour au creux de l'oreille.", photo: "assets/soprano/amelia.jpeg" },
+        { id: "sop2", nom: "Pace", description: "Sa voix, un baiser déposé sur un pétale de rose.", photo: "assets/soprano/pace.jpeg" },
+        { id: "sop3", nom: "Dada", description: "Un soupir de lune dans une nuit d'été.", photo: "assets/soprano/dada.jpeg" },
+        { id: "sop4", nom: "M.Pauline", description: "Un je t'aime chuchoté par le vent.", photo: "assets/soprano/pauline.jpeg" },
+        { id: "sop5", nom: "Cynthia", description: "Une caresse de soie sur la peau.", photo: "assets/soprano/cycy.jpeg" }
     ],
     Meilleur_Alti: [
-        { id: "alt1", nom: "Grâce-Julie", description: "Voix grave et ronde, qui réchauffe comme une couverture.", photo:"assets/alto/grace1.jpeg" },
-        { id: "alt2", nom: "Ya Sandra", description: "Voix profonde, sensuelle et apaisante.", photo: "assets/alto/sandra2.jpeg" },
-        { id: "alt3", nom: "Bénie", description: "Voix sombre et vibrante, parfaite pour le blues", photo: "assets/alto/beni1.jpeg" },
-        { id: "alt4", nom: "Mizou", description: "Voix sombre et profonde", photo: "assets/alto/mizou1.jpeg" },
-        { id: "alt5", nom: "Laurence", description: "Voix chaude et un peu rauque", photo: "assets/alto/laura2.jpeg" }
+        { id: "alt1", nom: "Grâce-Julie", description: "Voix grave et ronde, qui réchauffe comme une couverture.", photo:"assets/alto/grace.jpeg" },
+        { id: "alt2", nom: "Ya Sandra", description: "Voix profonde, sensuelle et apaisante.", photo: "assets/alto/sandra.jpeg" },
+        { id: "alt3", nom: "Bénie", description: "Voix sombre et vibrante, parfaite pour le blues", photo: "assets/alto/beni.jpeg" },
+        { id: "alt4", nom: "Mizou", description: "Voix sombre et profonde", photo: "assets/alto/mizou.jpeg" },
+        { id: "alt5", nom: "Laurence", description: "Voix chaude et un peu rauque", photo: "assets/alto/laura.jpeg" }
     ],
     Meilleur_Tenor: [
-        { id: "ten1", nom: "Djessy", description: "Le grand chef", photo: "assets/tenor/djessy1.jpeg" },
-        { id: "ten2", nom: "Winner", description: "le charmeur", photo: "assets/tenor/winner1.jpeg" },
-        { id: "ten3", nom: "Manu", description: "Voix sombre et puissante, un peu théâtrale", photo: "assets/tenor/Manu2.jpeg" },
+        { id: "ten1", nom: "Djessy", description: "Le grand chef", photo: "assets/tenor/djessy.jpeg" },
+        { id: "ten2", nom: "Winner", description: "le charmeur", photo: "assets/tenor/winner.jpeg" },
+        { id: "ten3", nom: "Manu", description: "Voix sombre et puissante, un peu théâtrale", photo: "assets/tenor/manu.jpeg" },
         { id: "ten4", nom: "Georges", description: "Voix grave mais vibrante", photo: "assets/tenor/george.jpeg" },
-        { id: "ten5", nom: "Glodi Nsimukala", description: "Voix ronde et enveloppante", photo: "assets/tenor/nsimukala1.jpeg" }
+        { id: "ten5", nom: "Glodi Nsimukala", description: "Voix ronde et enveloppante", photo: "assets/tenor/nsimukala.jpeg" }
     ],
     Meilleur_Basse: [
-        { id: "bas1", nom: "Andy", description: "le génie des génies", photo: "assets/basse/andy2.jpeg" },
+        { id: "bas1", nom: "Andy", description: "le génie des génies", photo: "assets/basse/andy.jpeg" },
         { id: "bas2", nom: "Paul", description: "Le calme dans la tempête", photo: "assets/basse/bev.jpeg" },
-        { id: "bas3", nom: "Levy", description: "Le rocher des âges", photo: "assets/basse/Levy1.jpeg" },
+        { id: "bas3", nom: "Levy", description: "Le rocher des âges", photo: "assets/basse/levy.jpeg" },
         { id: "bas4", nom: "Pascal Dramali", description: "La révélation", photo: "assets/basse/pascal.jpeg" },
         { id: "bas5", nom: "Maxime", description: "La puissance", photo: "assets/basse/maxime.jpeg" }
     ],
     Innovation: [
-        { id: "inn1", nom: "M. Winner", description: "Chant du jubilé", photo: "assets/innovation/winner2.jpeg" },
-        { id: "inn2", nom: "M. Djessy", description: "Kyrié", photo: "assets/innovation/Djessy2.jpeg" },
+        { id: "inn1", nom: "M. Winner", description: "Chant du jubilé", photo: "assets/innovation/winner.jpeg" },
+        { id: "inn2", nom: "M. Djessy", description: "Kyrié", photo: "assets/innovation/djessy.jpeg" },
         { id: "inn3", nom: "M. Noella", description: "Car wash", photo: "assets/innovation/luz.jpeg" },
-        { id: "inn4", nom: "M. Hugues", description: "Gloria", photo: "assets/innovation/alain2.jpeg" },
+        { id: "inn4", nom: "M. Hugues", description: "Gloria", photo: "assets/innovation/alain.jpeg" },
         { id: "inn5", nom: "Dada", description: "MEDIAS", photo: "assets/innovation/hamuli.jpeg" }
     ]
 };
