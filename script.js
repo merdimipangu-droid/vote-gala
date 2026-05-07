@@ -1,4 +1,3 @@
-// ========== CONNEXION SUPABASE ==========
 const SUPABASE_URL = "https://vakxwklnrgtiqmlggcyq.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_gAbwfY1VE4AskWcDs8wrkw_m9Cjor1K";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
