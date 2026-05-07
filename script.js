@@ -2,8 +2,8 @@
 const SUPABASE_URL = "https://vakxwklnrgtiqmlggcyq.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_gAbwfY1VE4AskWcDs8wrkw_m9Cjor1K";
 
-// IMPORTANT : on utilise supabaseClient pour éviter le conflit
-const supabaseClient = window.supabase.createClient(
+// IMPORTANT : on utilise supabase (pas supabaseClient) pour éviter les erreurs
+const supabase = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
 );
