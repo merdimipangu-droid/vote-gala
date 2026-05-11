@@ -597,19 +597,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return; 
     }
     
-    const isAuthenticated = await checkAuth();
-    if (!isAuthenticated) return;
-    
-    const userEmailSpan = document.getElementById('userEmail');
-    if (userEmailSpan && currentUser) {
-        userEmailSpan.textContent = currentUser.email;
-    }
-    
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', logout);
-    }
-    
     checkAndShowVoteStatus();
     initPhotoModal();
     
